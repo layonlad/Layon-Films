@@ -5,12 +5,6 @@
   // Número oficial (apresentação comercial): (31) 9 9293 2034
   const WHATSAPP = '5531992932034';
 
-  const FILMS = [
-    { src: 'assets/video/filme-01.mp4', poster: 'assets/video/posters/filme-01.jpg', title: 'Filme 01 · Cerimônia' },
-    { src: 'assets/video/filme-02.mp4', poster: 'assets/video/posters/filme-02.jpg', title: 'Filme 02 · Making of e cerimônia' },
-    { src: 'assets/video/filme-03.mp4', poster: 'assets/video/posters/filme-03.jpg', title: 'Filme 03 · Cerimônia ao ar livre' }
-  ];
-
   const $ = (s, c = document) => c.querySelector(s);
   const $$ = (s, c = document) => [...c.querySelectorAll(s)];
   const root = document.documentElement;
@@ -225,12 +219,11 @@
       card.addEventListener('mouseenter', () => startPreview(card));
       card.addEventListener('mouseleave', () => stopPreview(card));
     }
-    card.addEventListener('click', () => openFilm(Number(card.dataset.film)));
+    card.addEventListener('click', () => openFilm(card));
   });
 
   // No celular, o filme centralizado no carrossel toca em silêncio
-  const rail = $('#film-rail');
-  const railBar = $('#rail-bar');
+  const rails = $$('.film-rail');
   if (!canHover && 'IntersectionObserver' in window) {
     const io = new IntersectionObserver(entries => {
       entries.forEach(e => {
@@ -238,15 +231,17 @@
         if (e.intersectionRatio > 0.75) startPreview(card); else stopPreview(card);
       });
     }, { threshold: [0, 0.75, 1] });
-    $$('.film', rail).forEach(f => io.observe(f));
+    $$('.film').forEach(f => io.observe(f));
   }
-  if (rail && railBar) {
+  rails.forEach(rail => {
+    const railBar = $('.rail-progress span', rail.parentElement);
+    if (!railBar) return;
     rail.addEventListener('scroll', () => {
       const max = rail.scrollWidth - rail.clientWidth;
       const p = max > 0 ? rail.scrollLeft / max : 0;
       railBar.style.transform = `translateX(${p * 199}%)`;
     }, { passive: true });
-  }
+  });
 
   /* ---------------------------------------------------------- Modais (base) */
   let lastFocus = null;
@@ -285,22 +280,26 @@
   const filmModal = $('#film-modal');
   const modalVideo = $('#modal-video');
   const modalCaption = $('#modal-caption');
+  let films = [];
   let filmIndex = 0;
 
   function setFilm(i) {
-    filmIndex = (i + FILMS.length) % FILMS.length;
-    const f = FILMS[filmIndex];
-    modalVideo.poster = f.poster;
-    modalVideo.src = f.src;
-    modalCaption.textContent = f.title;
+    filmIndex = (i + films.length) % films.length;
+    const card = films[filmIndex];
+    const v = $('video', card);
+    modalVideo.poster = v.poster;
+    modalVideo.src = v.dataset.src;
+    modalCaption.textContent = card.dataset.title;
     modalVideo.muted = false;
     modalVideo.play().catch(() => {});
   }
-  function openFilm(i) {
+  // Anterior e próximo navegam apenas entre os filmes da mesma fileira
+  function openFilm(card) {
+    films = $$('.film-card', card.closest('.film-rail'));
     cards.forEach(stopPreview);
     if (heroVideo) heroVideo.pause();
     openModal(filmModal);
-    setFilm(i);
+    setFilm(films.indexOf(card));
   }
   const closeFilm = () => {
     modalVideo.pause();
@@ -319,7 +318,7 @@
   const lightbox = $('#lightbox');
   const lbImg = $('#lightbox-img');
   const lbCount = $('#lightbox-count');
-  const photos = $$('[data-lightbox]');
+  let photos = [];
   let photoIndex = 0;
 
   const setPhoto = i => {
@@ -336,12 +335,16 @@
     // Pré-carrega a próxima
     const next = new Image(); next.src = photos[(photoIndex + 1) % photos.length].src;
   };
-  photos.forEach((img, i) => {
+  $$('[data-lightbox]').forEach(img => {
     const fig = img.closest('figure');
     fig.setAttribute('tabindex', '0');
     fig.setAttribute('role', 'button');
     fig.setAttribute('aria-label', `Ampliar fotografia: ${img.alt}`);
-    const open = () => { openModal(lightbox); setPhoto(i); };
+    const open = () => {
+      photos = $$('[data-lightbox]', img.closest('section'));
+      openModal(lightbox);
+      setPhoto(photos.indexOf(img));
+    };
     fig.addEventListener('click', open);
     fig.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
   });
@@ -359,6 +362,19 @@
     if (m === lightbox && e.key === 'ArrowRight') setPhoto(photoIndex + 1);
     if (m === lightbox && e.key === 'ArrowLeft') setPhoto(photoIndex - 1);
   });
+
+  /* ---------------------------------------------------------- Galeria: ver mais */
+  const moreBtn = $('#gallery-toggle');
+  const more = $('#gallery-more');
+  if (moreBtn && more) {
+    moreBtn.addEventListener('click', () => {
+      const open = more.classList.toggle('is-open');
+      moreBtn.setAttribute('aria-expanded', String(open));
+      moreBtn.textContent = open ? 'Ver menos fotos' : 'Ver mais fotos';
+      if (!open) moreBtn.scrollIntoView({ block: 'center' });
+      onScroll();
+    });
+  }
 
   /* ---------------------------------------------------------- Luz que acompanha o cursor nos cards */
   if (canHover && !reduceMotion) {

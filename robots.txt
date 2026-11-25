@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://layonfilms.com.br/sitemap.xml
