@@ -1,0 +1,7 @@
+# Instalação na HostGator (cPanel > Git Version Control > Deploy HEAD Commit)
+# Copia apenas os arquivos públicos do site para a pasta do domínio.
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=$HOME/layonfilms.com.br/
+    - /bin/cp -R index.html robots.txt sitemap.xml .htaccess assets $DEPLOYPATH

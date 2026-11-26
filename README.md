@@ -9,7 +9,15 @@ powershell -ExecutionPolicy Bypass -File serve.ps1
 ```
 
 Abra http://localhost:5173. O `serve.ps1` é só para testes locais (suporta a reprodução de vídeo com Range).
-Para publicar, envie a pasta `site/` inteira para qualquer hospedagem estática (Netlify, Vercel, GitHub Pages, Hostinger etc.).
+## Publicar (HostGator)
+
+O site fica hospedado na HostGator (cPanel), na pasta `~/layonfilms.com.br`.
+
+1. Envie as alterações para a branch `main` no GitHub.
+2. No cPanel, abra **Git™ Version Control** → repositório `Layon-Films` → **Manage** → **Pull or Deploy**.
+3. Clique em **Update from Remote** e depois em **Deploy HEAD Commit**.
+
+O `.cpanel.yml` define o que é copiado; o `.htaccess` força HTTPS e define o cache.
 
 ## Onde alterar
 
